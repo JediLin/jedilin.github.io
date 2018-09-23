@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-hant-tw">
+<head>
+  <meta charset="utf-8" />
+  <title>Audio Descriptions Demo based on works by James Edwards</title>
+  <style>
+    body {
+    	display: grid;
+    	height: 100vh;
+    	overflow: hidden;
+    	grid-template-columns: 1fr auto 1fr;
+    	grid-template-rows: 1fr auto 1fr;
+    	font-family: "思源黑體", "Source Han Serif", sans-serif;
+    	font-size: 2.5em;
+    }
+    main {
+    	grid-column: 2;
+    	grid-row: 2;
+    }
+    button {
+    	font-family: "思源黑體", "Source Han Serif", sans-serif;
+    	font-size: 100%;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <video id="video" preload="auto" controls="controls" width="800" height="436" >
+    <source src="CapeNo7Intro.mp4" type="video/mp4" />
+    <track src="CapeNo7Intro.vtt" srclang="zh-hant-tw" label="中文字幕" default="default" />
+  </video>
+  <audio id="audio" preload="auto">
+    <source src="CapeNo7Intro_AudioDesc.mp3" type="audio/mp3" />
+  </audio>
+  <br>
+  音軌切換：
+  <button id="adon">口述影像</button>
+  <button id="adoff">電影原音</button>
+</main>
+<script type="text/javascript">
+//get references to the video and audio elements
+var video = document.getElementById('video');
+var audio = document.getElementById('audio');
+var adon = document.getElementById('adon');
+var adoff = document.getElementById('adoff');
+
+//if media controllers are supported, 
+//create a controller instance for the video and audio
+if(typeof(window.MediaController) === 'function')
+{
+	var controller = new MediaController();
+	audio.controller = controller;
+	video.controller = controller;
+}	
+
+//else create a null controller reference for comparison
+else
+{
+	controller = null;
+}
+
+//reduce the video volume slightly to emphasise the audio
+audio.volume = 1;
+video.volume = 0;
+adon.disabled = true;
+
+//when the video plays
+video.addEventListener('play', function() 
+{
+	//if we have audio but no controller 
+	//and the audio is paused, play that too
+	if(!controller && audio.paused)
+	{
+		audio.play();
+	}
+}, false);
+
+//when the video pauses
+video.addEventListener('pause', function()
+{
+	//if we have audio but no controller 
+	//and the audio isn't paused, pause that too
+	if(!controller && !audio.paused)
+	{
+		audio.pause();
+	}
+}, false);
+
+//when the video ends
+video.addEventListener('ended', function()
+{
+	//if we have a controller, pause that
+	if(controller)
+	{
+		controller.pause();
+	}
+	//otherwise pause the video and audio separately
+	else
+	{
+		video.pause();
+		audio.pause();
+	}
+}, false);
+
+
+//when the video time is updated
+video.addEventListener('timeupdate', function()
+{
+	//if we have audio but no controller, 
+	//and the audio has sufficiently loaded
+	if(!controller && audio.readyState >= 4)
+	{
+		//if the audio and video times are different,
+		//update the audio time to keep it in sync
+		if(Math.ceil(audio.currentTime) != Math.ceil(video.currentTime))
+		{
+			audio.currentTime = video.currentTime;
+		}
+	}
+}, false);
+
+adoff.addEventListener('click', function()
+{
+  audio.volume = 0;
+  video.volume = 1;
+  adon.disabled = false;
+  adoff.disabled = true;
+}, false);
+
+adon.addEventListener('click', function()
+{
+  audio.volume = 1;
+  video.volume = 0;
+  adon.disabled = true;
+  adoff.disabled = false;
+}, false);
+
+</script>
+</body>
+</html>
